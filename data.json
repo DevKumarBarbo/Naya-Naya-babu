@@ -1,6 +1,5 @@
 {
   "lastMessageId": null,
   "clicks": {},
-  "loops": [],
-  "cronJobs": []
+  "schedules": []
 }

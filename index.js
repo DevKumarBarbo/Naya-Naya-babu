@@ -16,10 +16,9 @@ for (const f of files) {
   client.commands.set(cmd.data.name, cmd);
 }
 
-// interactions
+// buttons
 client.on('interactionCreate', async interaction => {
 
-  // 🔘 buttons
   if (interaction.isButton()) {
     const data = JSON.parse(fs.readFileSync('./data.json'));
 
@@ -28,18 +27,10 @@ client.on('interactionCreate', async interaction => {
 
     fs.writeFileSync('./data.json', JSON.stringify(data, null, 2));
 
-    if (interaction.customId === "bookmark") {
-      return interaction.reply({ content: "🔖 Saved!", ephemeral: true });
-    }
-
-    if (interaction.customId === "read_more") {
-      return interaction.reply({
-        content: `📊 Clicks: ${data.clicks.read_more || 0}`,
-        ephemeral: true
-      });
-    }
-
-    return interaction.reply({ content: "Tracked", ephemeral: true });
+    return interaction.reply({
+      content: `📊 Clicks: ${data.clicks[interaction.customId]}`,
+      ephemeral: true
+    });
   }
 
   if (!interaction.isChatInputCommand()) return;
@@ -50,21 +41,18 @@ client.on('interactionCreate', async interaction => {
   await cmd.execute(interaction);
 });
 
-// load cron jobs
+// load schedules
 client.once('ready', () => {
-  console.log('🚀 Bot Ready');
+  console.log('🔥 NIF ULTRA ONLINE');
 
   const data = JSON.parse(fs.readFileSync('./data.json'));
 
-  data.cronJobs.forEach(job => {
+  data.schedules.forEach(job => {
     cron.schedule(job.pattern, async () => {
       const channel = client.channels.cache.get(job.channel);
       if (!channel) return;
 
-      channel.send({
-        content: job.ping || "",
-        embeds: [job.embed]
-      });
+      channel.send(job.payload);
     });
   });
 });
