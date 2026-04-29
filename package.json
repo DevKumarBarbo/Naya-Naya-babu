@@ -1,0 +1,26 @@
+{
+  "name": "naya-naya-babu",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "deploy": "node deploy-commands.js",
+    "crl": "rm -rf node_modules package-lock.json && npm install && node deploy-commands.js && node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DevKumarBarbo/Naya-Naya-babu.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DevKumarBarbo/Naya-Naya-babu/issues"
+  },
+  "homepage": "https://github.com/DevKumarBarbo/Naya-Naya-babu#readme",
+  "dependencies": {
+    "discord.js": "^14.26.3"
+  }
+}
