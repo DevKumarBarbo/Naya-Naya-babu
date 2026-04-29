@@ -57,7 +57,7 @@ module.exports = {
 `> ${description}
 
 ━━━━━━━━━━━━━━━━━━━
-🧑 <@${interaction.user.id}>
+
 ⏰ <t:${Math.floor(Date.now()/1000)}:R>
 ━━━━━━━━━━━━━━━━━━━`
       )
