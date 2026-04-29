@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "deploy": "node deploy-commands.js",
-    "crl": "rm -rf node_modules package-lock.json && npm install && node deploy-commands.js && node index.js"
+    "deploy": "node deploy-commands.js"
   },
   "repository": {
     "type": "git",
@@ -21,6 +20,7 @@
   },
   "homepage": "https://github.com/DevKumarBarbo/Naya-Naya-babu#readme",
   "dependencies": {
-    "discord.js": "^14.26.3"
+    "discord.js": "^14.26.3",
+    "node-cron": "^4.2.1"
   }
 }

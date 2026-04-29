@@ -1,24 +1,20 @@
 const { REST, Routes } = require('discord.js');
 const fs = require('fs');
 
-const commands = [];
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const cmds = [];
+const files = fs.readdirSync('./commands').filter(f => f.endsWith('.js'));
 
-for (const file of commandFiles) {
-  const command = require(`./commands/${file}`);
-  commands.push(command.data.toJSON());
+for (const f of files) {
+  const c = require(`./commands/${f}`);
+  cmds.push(c.data.toJSON());
 }
 
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 (async () => {
-  try {
-    await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID),
-      { body: commands }
-    );
-    console.log('Commands deployed');
-  } catch (error) {
-    console.error(error);
-  }
+  await rest.put(
+    Routes.applicationCommands(process.env.CLIENT_ID),
+    { body: cmds }
+  );
+  console.log("Deployed");
 })();
