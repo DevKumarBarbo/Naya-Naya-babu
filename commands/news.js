@@ -12,79 +12,96 @@ const cron = require('node-cron');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('news')
-    .setDescription('NIF Broadcast System')
+    .setDescription('Premium News System')
 
-    .addStringOption(o => o.setName('title'))
-    .addStringOption(o => o.setName('summary'))
-    .addStringOption(o => o.setName('details'))
-    .addStringOption(o => o.setName('category'))
+    .addStringOption(o => o.setName('title').setDescription('Headline'))
+    .addStringOption(o => o.setName('summary').setDescription('Summary'))
+    .addStringOption(o => o.setName('details').setDescription('Details'))
+
+    .addStringOption(o =>
+      o.setName('category')
+        .setDescription('Category')
+        .addChoices(
+          { name: 'General', value: 'General' },
+          { name: 'Update', value: 'Update' },
+          { name: 'Alert', value: 'Alert' },
+          { name: 'Market', value: 'Market' }
+        )
+    )
+
+    .addStringOption(o =>
+      o.setName('priority')
+        .setDescription('Priority')
+        .addChoices(
+          { name: 'Low', value: 'low' },
+          { name: 'Medium', value: 'medium' },
+          { name: 'High', value: 'high' },
+          { name: 'Breaking', value: 'breaking' }
+        )
+    )
+
     .addStringOption(o => o.setName('tags'))
-    .addStringOption(o => o.setName('urgency'))
-    .addStringOption(o => o.setName('link'))
     .addStringOption(o => o.setName('image'))
-    .addStringOption(o => o.setName('theme'))
+    .addStringOption(o => o.setName('link'))
     .addStringOption(o => o.setName('ping'))
+
     .addStringOption(o => o.setName('schedule'))
     .addStringOption(o => o.setName('loop'))
     .addStringOption(o => o.setName('cron')),
 
   async execute(interaction) {
 
-    if (interaction.user.id !== "1409058941115174934") {
+    if (interaction.user.id !== "1409058941115174934")
       return interaction.reply({ content: "❌ Not allowed", ephemeral: true });
-    }
 
     const get = (x, d) => interaction.options.getString(x) || d;
 
-    const title = get('title', "📰 NIF News Update");
-    const summary = get('summary', "No summary provided.");
+    const title = get('title', "📰 NIF Broadcast");
+    const summary = get('summary', "No summary.");
     const details = interaction.options.getString('details');
     const category = get('category', "General");
-    const tagsRaw = interaction.options.getString('tags');
-    const urgency = get('urgency', "low").toLowerCase();
-    const link = interaction.options.getString('link');
+    const priority = get('priority', "low");
+    const tags = interaction.options.getString('tags') || "";
+
     const image = interaction.options.getString('image');
-    const theme = interaction.options.getString('theme');
+    const link = interaction.options.getString('link');
     const pingOpt = interaction.options.getString('ping');
 
-    const schedule = interaction.options.getString('schedule');
+    const delay = interaction.options.getString('schedule');
     const loop = interaction.options.getString('loop');
     const cronPattern = interaction.options.getString('cron');
 
-    // PING
     let ping = "";
     if (pingOpt === "everyone") ping = "@everyone";
     else if (pingOpt === "here") ping = "@here";
     else if (pingOpt && pingOpt !== "none") ping = `<@&${pingOpt}>`;
 
-    // TAGS
-    let tags = "";
-    if (tagsRaw) tags = tagsRaw.split(",").map(t => `\`${t.trim()}\``).join(" ");
-
-    // COLOR + PRIORITY
     let color = 0x2b2d31;
-    let urgencyLabel = "🟢 LOW";
+    let pr = "🟢 LOW";
+    if (priority === "medium") { color = 0xf1c40f; pr = "🟡 MEDIUM"; }
+    if (priority === "high") { color = 0xe74c3c; pr = "🔴 HIGH"; }
+    if (priority === "breaking") { color = 0xff0033; pr = "🚨 BREAKING"; }
 
-    if (urgency === "medium") { color = 0xf1c40f; urgencyLabel = "🟡 MEDIUM"; }
-    if (urgency === "high") { color = 0xe74c3c; urgencyLabel = "🔴 HIGH"; }
-    if (urgency === "breaking") { color = 0xff0033; urgencyLabel = "🚨 BREAKING"; }
-
-    if (theme === "neon") color = 0x39ff14;
-    if (theme === "gold") color = 0xffd700;
-
+    // PROFESSIONAL UI
     const embed = new EmbedBuilder()
-      .setAuthor({
-        name: "NIF OFFICIAL SOURCE",
-        iconURL: interaction.client.user.displayAvatarURL()
-      })
-      .setTitle(title)
       .setColor(color)
+      .setAuthor({ name: "NIF OFFICIAL SOURCE • LIVE" })
+      .setTitle(`📰 ${title}`)
+      .setDescription(`━━━━━━━━━━━━━━━━━━
+📌 **SUMMARY**
+${summary}
+━━━━━━━━━━━━━━━━━━`)
       .addFields(
-        { name: "📌 Summary", value: summary },
-        ...(details ? [{ name: "📖 Details", value: details }] : []),
-        { name: "🏷 Category", value: category, inline: true },
-        { name: "⚡ Priority", value: urgencyLabel, inline: true },
-        ...(tags ? [{ name: "🏷 Tags", value: tags }] : [])
+        {
+          name: "📊 INFORMATION",
+          value: `🏷 ${category}
+⚡ ${pr}
+🏷 ${tags || "None"}`
+        },
+        ...(details ? [{
+          name: "📖 DETAILS",
+          value: details
+        }] : [])
       )
       .setFooter({ text: "NIF Network • Verified Broadcast" })
       .setTimestamp();
@@ -92,64 +109,69 @@ module.exports = {
     if (image) embed.setImage(image);
     if (link) embed.setURL(link);
 
+    // PREVIEW BUTTONS
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('stats')
-        .setLabel('📊 Analytics')
-        .setStyle(ButtonStyle.Primary),
-
-      new ButtonBuilder()
-        .setCustomId('bookmark')
-        .setLabel('🔖 Save')
-        .setStyle(ButtonStyle.Secondary),
-
-      new ButtonBuilder()
-        .setLabel('🌐 Open')
-        .setStyle(ButtonStyle.Link)
-        .setURL(link || "https://google.com")
+      new ButtonBuilder().setCustomId('post').setLabel('🚀 Post').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('cancel').setLabel('❌ Cancel').setStyle(ButtonStyle.Danger)
     );
 
-    const channel = interaction.channel;
+    await interaction.reply({
+      content: "👀 Preview",
+      embeds: [embed],
+      components: [row],
+      ephemeral: true
+    });
 
-    const send = async () => {
-      const msg = await channel.send({
+    const collector = interaction.channel.createMessageComponentCollector({
+      filter: i => i.user.id === interaction.user.id,
+      time: 60000
+    });
+
+    collector.on('collect', async i => {
+
+      if (i.customId === "cancel")
+        return i.update({ content: "❌ Cancelled", embeds: [], components: [] });
+
+      const send = () => interaction.channel.send({
         content: ping,
         embeds: [embed],
-        components: [row]
+        components: [
+          new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('stats').setLabel('📊 Stats').setStyle(ButtonStyle.Primary),
+            new ButtonBuilder().setCustomId('bookmark').setLabel('🔖 Save').setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setLabel('🌐 Open').setStyle(ButtonStyle.Link).setURL(link || "https://google.com")
+          )
+        ]
       });
 
-      const data = JSON.parse(fs.readFileSync('./data.json'));
-      data.lastMessageId = msg.id;
-      fs.writeFileSync('./data.json', JSON.stringify(data, null, 2));
-    };
+      if (delay) {
+        setTimeout(send, parseInt(delay) * 60000);
+        return i.update({ content: "⏰ Scheduled", embeds: [], components: [] });
+      }
 
-    if (schedule) {
-      setTimeout(send, parseInt(schedule) * 60000);
-      return interaction.reply("⏰ Scheduled");
-    }
+      if (loop) {
+        setInterval(send, parseInt(loop) * 60000);
+        return i.update({ content: "🔁 Loop started", embeds: [], components: [] });
+      }
 
-    if (loop) {
-      setInterval(send, parseInt(loop) * 60000);
-      return interaction.reply("🔁 Loop started");
-    }
+      if (cronPattern) {
+        cron.schedule(cronPattern, send);
 
-    if (cronPattern) {
-      cron.schedule(cronPattern, send);
+        const data = JSON.parse(fs.readFileSync('./data.json'));
+        data.schedules.push({
+          id: Date.now(),
+          pattern: cronPattern,
+          channel: interaction.channel.id,
+          payload: { content: ping, embeds: [embed.data] }
+        });
 
-      const data = JSON.parse(fs.readFileSync('./data.json'));
-      data.schedules.push({
-        id: Date.now(),
-        pattern: cronPattern,
-        channel: channel.id,
-        payload: { content: ping, embeds: [embed.data] }
-      });
+        fs.writeFileSync('./data.json', JSON.stringify(data, null, 2));
 
-      fs.writeFileSync('./data.json', JSON.stringify(data, null, 2));
+        return i.update({ content: "🕒 Cron scheduled", embeds: [], components: [] });
+      }
 
-      return interaction.reply("🕒 Cron scheduled");
-    }
-
-    await send();
-    return interaction.reply("✅ Broadcast sent");
+      await send();
+      return i.update({ content: "✅ Posted", embeds: [], components: [] });
+    });
   }
 };

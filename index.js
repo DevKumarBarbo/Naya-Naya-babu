@@ -3,20 +3,15 @@ const fs = require('fs');
 const cron = require('node-cron');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
 client.commands = new Collection();
 
-process.on('unhandledRejection', console.error);
-process.on('uncaughtException', console.error);
-
 // load commands
-const files = fs.readdirSync('./commands').filter(f => f.endsWith('.js'));
-for (const f of files) {
-  const cmd = require(`./commands/${f}`);
+require('fs').readdirSync('./commands').forEach(f => {
+  const cmd = require('./commands/' + f);
   client.commands.set(cmd.data.name, cmd);
-}
+});
 
-// interactions
+// interaction handler
 client.on('interactionCreate', async interaction => {
 
   // BUTTONS
@@ -28,40 +23,32 @@ client.on('interactionCreate', async interaction => {
 
     fs.writeFileSync('./data.json', JSON.stringify(data, null, 2));
 
-    if (interaction.customId === "bookmark") {
-      return interaction.reply({ content: "🔖 Saved!", ephemeral: true });
-    }
+    if (interaction.customId === "bookmark")
+      return interaction.reply({ content: "🔖 Saved", ephemeral: true });
 
-    if (interaction.customId === "stats") {
+    if (interaction.customId === "stats")
       return interaction.reply({
-        content: `📊 Total Clicks: ${JSON.stringify(data.clicks, null, 2)}`,
+        content: `📊 ${JSON.stringify(data.clicks, null, 2)}`,
         ephemeral: true
       });
-    }
-
-    return interaction.reply({ content: "Tracked", ephemeral: true });
   }
 
   if (!interaction.isChatInputCommand()) return;
 
   const cmd = client.commands.get(interaction.commandName);
-  if (!cmd) return;
-
-  await cmd.execute(interaction);
+  if (cmd) await cmd.execute(interaction, client);
 });
 
 // LOAD SCHEDULES
 client.once('ready', () => {
-  console.log('🚀 NIF SYSTEM ONLINE');
+  console.log("🚀 SYSTEM LIVE");
 
   const data = JSON.parse(fs.readFileSync('./data.json'));
 
-  data.schedules.forEach(job => {
-    cron.schedule(job.pattern, async () => {
-      const channel = client.channels.cache.get(job.channel);
-      if (!channel) return;
-
-      channel.send(job.payload);
+  data.schedules.forEach(s => {
+    cron.schedule(s.pattern, async () => {
+      const ch = client.channels.cache.get(s.channel);
+      if (ch) ch.send(s.payload);
     });
   });
 });
