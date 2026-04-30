@@ -16,9 +16,10 @@ for (const f of files) {
   client.commands.set(cmd.data.name, cmd);
 }
 
-// buttons
+// interactions
 client.on('interactionCreate', async interaction => {
 
+  // BUTTONS
   if (interaction.isButton()) {
     const data = JSON.parse(fs.readFileSync('./data.json'));
 
@@ -27,10 +28,18 @@ client.on('interactionCreate', async interaction => {
 
     fs.writeFileSync('./data.json', JSON.stringify(data, null, 2));
 
-    return interaction.reply({
-      content: `📊 Clicks: ${data.clicks[interaction.customId]}`,
-      ephemeral: true
-    });
+    if (interaction.customId === "bookmark") {
+      return interaction.reply({ content: "🔖 Saved!", ephemeral: true });
+    }
+
+    if (interaction.customId === "stats") {
+      return interaction.reply({
+        content: `📊 Total Clicks: ${JSON.stringify(data.clicks, null, 2)}`,
+        ephemeral: true
+      });
+    }
+
+    return interaction.reply({ content: "Tracked", ephemeral: true });
   }
 
   if (!interaction.isChatInputCommand()) return;
@@ -41,9 +50,9 @@ client.on('interactionCreate', async interaction => {
   await cmd.execute(interaction);
 });
 
-// load schedules
+// LOAD SCHEDULES
 client.once('ready', () => {
-  console.log('🔥 NIF ULTRA ONLINE');
+  console.log('🚀 NIF SYSTEM ONLINE');
 
   const data = JSON.parse(fs.readFileSync('./data.json'));
 

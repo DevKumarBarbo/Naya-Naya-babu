@@ -15,7 +15,7 @@ module.exports = {
 
     const text = data.schedules.map(s =>
       `ID: ${s.id} | ${s.pattern}`
-    ).join("\n");
+    ).join("\\n");
 
     await interaction.reply({ content: text, ephemeral: true });
   }

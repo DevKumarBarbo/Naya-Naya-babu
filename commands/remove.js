@@ -8,8 +8,8 @@ module.exports = {
     .addStringOption(o => o.setName('id').setRequired(true)),
 
   async execute(interaction) {
-    const id = interaction.options.getString('id');
 
+    const id = interaction.options.getString('id');
     const data = JSON.parse(fs.readFileSync('./data.json'));
 
     data.schedules = data.schedules.filter(s => s.id != id);
